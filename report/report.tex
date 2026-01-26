@@ -38,6 +38,36 @@ Controles aplicados, IAM, firewall, KMS, logging.
 \subsection*{Análisis del ejemplo práctico}
 Descripción del experimento, comandos, resultados.
 
+\subsection*{Resultados obtenidos}
+Se desplegó la aplicación en una VM con Docker y se verificaron los endpoints y el contenedor. A continuación se muestran los comandos ejecutados y sus salidas (salida recabada desde la VM):
+
+\begin{verbatim}
+# Peticiones a los endpoints (desde la VM)
+curl -s http://127.0.0.1:8080/
+{"message":"CloudSecurity example app","host":"01945135b18e"}
+
+curl -s http://127.0.0.1:8080/health
+{"status":"ok"}
+
+curl -s -H "x-api-key: clave_demo_segura" http://127.0.0.1:8080/secure
+{"secret":"datos-sensibles-de-ejemplo"}
+
+# Estado de contenedores
+docker ps
+CONTAINER ID   IMAGE                           COMMAND                  CREATED         STATUS         PORTS                                         NAMES
+01945135b18e   cloudsec:latest                 "docker-entrypoint.s..."   5 minutes ago   Up 5 minutes   0.0.0.0:8080->3000/tcp, [::]:8080->3000/tcp   cloudsec
+c24c8508bdea   frontend-leccion1-3u-frontend   "docker-entrypoint.s..."   5 days ago      Up 3 days      0.0.0.0:5173->5173/tcp, [::]:5173->5173/tcp   leccion3u-frontend
+
+# Logs del contenedor (ejemplo)
+docker logs -f cloudsec
+App listening on port 3000
+\end{verbatim}
+
+Observaciones:
+- El contenedor `cloudsec` está mapeado al puerto 8080 en la VM y responde correctamente a las peticiones.
+- Espacio disponible en raíz antes del despliegue: aproximadamente 3.1GB. Se recomienda limpieza de imágenes con `docker image prune -f` si se requiere liberar espacio.
+- Para pruebas remotas desde Internet fue posible acceder a la IP pública del host en el puerto 8080 (ejemplo mostrado en navegador). Si no se puede acceder desde fuera, revisar reglas de firewall en la plataforma cloud.
+
 \section*{7. Discusión}
 Evaluación, comparación teoría/práctica, riesgos identificados y limitaciones.
 
