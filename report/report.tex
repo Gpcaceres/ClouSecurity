@@ -69,15 +69,74 @@ Observaciones:
 - Para pruebas remotas desde Internet fue posible acceder a la IP pública del host en el puerto 8080 (ejemplo mostrado en navegador). Si no se puede acceder desde fuera, revisar reglas de firewall en la plataforma cloud.
 
 \section*{7. Discusión}
-Evaluación, comparación teoría/práctica, riesgos identificados y limitaciones.
+Evaluación de la efectividad de las medidas aplicadas:
+
+La implementación práctica demostró controles básicos operativos: uso de contenedores para aislar la aplicación, un endpoint protegido por una clave (API key) y registro de actividad en los logs del contenedor. Estos controles son efectivos para una demostración educativa, pero requieren mejoras para cumplir con escenarios productivos.
+
+Comparación entre teoría y práctica:
+
+- Teoría: el modelo de responsabilidad compartida y principios de CIA (Confidencialidad, Integridad, Disponibilidad) exigen controles en múltiples capas (identidad, red, datos y monitoreo).
+- Práctica: el experimento implementa aislamiento (contenedor) y autenticación mínima, pero no incorpora gestión de secretos segura, cifrado gestionado ni políticas de IAM granulares.
+
+Principales riesgos identificados:
+
+- Exposición de puertos: el servicio está mapeado al puerto 8080 de la VM; si no existen reglas de firewall adecuadas, puede quedar accesible públicamente.
+- Gestión de secretos débil: el `API_KEY` se inyecta mediante variable de entorno en el script; si se comparte el script o se almacenan imágenes sin protección, la clave puede filtrarse.
+- Principio de menor privilegio no garantizado: la VM y el contenedor pueden correr con permisos excesivos si no se configuran cuentas de servicio y usuarios con roles mínimos.
+- Falta de cifrado de datos en reposo con KMS y falta de rotación de claves.
+- Ausencia de escaneo automático de vulnerabilidades en imágenes y ausencia de políticas de entrega segura (p. ej. firma de imágenes).
+
+Limitaciones del entorno implementado:
+
+- Recursos limitados (10GB disco) restringen pruebas de escalado y almacenamiento de artefactos.
+- Entorno basado en VM no gestionada implica mayor responsabilidad operacional (parches, backup, hardening) comparado con servicios serverless gestionados.
+- No se configuraron herramientas de monitoreo/alerting centralizadas en GCP (Cloud Monitoring) durante la prueba.
 
 \section*{8. Conclusiones}
-Cumplimiento de objetivos y aportes.
+Cumplimiento de los objetivos planteados:
+
+El objetivo de analizar la seguridad en la nube mediante teoría y un caso práctico se cumple parcialmente: la parte teórica queda documentada y el caso práctico demuestra conceptos clave (aislamiento mediante contenedores, autenticación básica, y exposición controlada en la VM). Sin embargo, para un análisis completo hacen falta controles adicionales y evidencias de monitoreo continuo.
+
+Importancia de la correcta configuración en la nube:
+
+Este ejercicio confirma que errores de configuración (puertos expuestos, claves en variables no seguras, permisos amplios) representan riesgos significativos. La seguridad en la nube depende tanto del diseño como de la correcta implementación de controles y políticas.
+
+Aportes del caso práctico al análisis de seguridad:
+
+El laboratorio ofrece evidencia reproducible sobre cómo pequeñas mejoras (gestión segura de secretos, firewall, escaneo de imágenes) aumentan de manera significativa el nivel de seguridad sin requerir una arquitectura compleja.
 
 \section*{9. Recomendaciones}
-Buenas prácticas y mejoras.
+Mejores prácticas y acciones concretas:
+
+- Gestión de secretos: usar un gestor de secretos (p. ej. GCP Secret Manager) y evitar incluir claves en scripts o variables de entorno en imágenes públicas. Implementar rotación automática de secretos.
+- Principio de menor privilegio: crear cuentas de servicio con roles mínimos necesarios; evitar usar credenciales de usuario para procesos automatizados.
+- Reducción de exposición de red: limitar reglas de firewall por IP o rango; preferir conexiones a través de balanceadores gestionados con TLS terminación; usar SSH OS Login y deshabilitar login por contraseña.
+- Cifrado: usar Cloud KMS para cifrado de datos sensibles en reposo y gestionar claves con políticas de rotación.
+- Entrega segura y escaneo: integrar escaneo de vulnerabilidades en la pipeline (herramientas: Container Analysis, Trivy) y usar firma de imágenes o Binary Authorization.
+- Monitorización y respuesta: habilitar Cloud Logging y Cloud Monitoring; definir alertas (CPU, errores 5xx, patrones de acceso no autorizados) y enviar logs a almacenamiento central (BigQuery o SIEM).
+- Gestión de parches y hardening: aplicar actualizaciones automáticas del sistema operativo y endurecer la VM (CIS Benchmarks) o migrar a servicios gestionados (Cloud Run, Cloud Functions) para reducir superficie.
+- Restricción de acceso público: servir la API mediante HTTPS con certificados gestionados y activar WAF/Cloud Armor si es necesario.
+
+Recomendaciones para futuras implementaciones:
+
+- Evaluar migrar la aplicación a Cloud Run con autenticación IAM para servidores sin estado y menor sobrecarga operativa.
+- Automatizar IaC (Terraform) para reproducibilidad y revisión de cambios en infraestructura.
+- Incorporar pruebas de seguridad automatizadas (SAST/DAST) en CI/CD.
+
+Posibles mejoras al sistema analizado:
+
+- Integrar Secret Manager y modificar `deploy_vm.sh` para leer secretos en tiempo de ejecución.
+- Configurar un flujo básico de CI que construya, escanee y publique la imagen a un registro privado (Artifact Registry).
+- Añadir métricas y dashboards en Cloud Monitoring para el informe final.
 
 \section*{10. Fuentes bibliográficas}
-Lista de referencias.
+\begin{itemize}
+	\item NIST Special Publication 800-53 – Security and Privacy Controls for Information Systems and Organizations.
+	\item ISO/IEC 27001 – Information security management systems.
+	\item OWASP Top Ten – Common web application vulnerabilities.
+	\item Google Cloud: Security Best Practices. \url{https://cloud.google.com/security}
+	\item Google Cloud: Best practices for deploying containers. \url{https://cloud.google.com/containers}
+	\item Artículos y guías sobre gestión de secretos y cifrado con Cloud KMS.
+\end{itemize}
 
 \end{document}
