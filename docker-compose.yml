@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # 🔴 SERVICIO INSEGURO - Para demostración de vulnerabilidades
   insecure:
