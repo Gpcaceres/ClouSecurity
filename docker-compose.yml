@@ -49,11 +49,11 @@ services:
   # 🎨 FRONTEND - Interface web didáctica para demostración
   frontend:
     container_name: cloudsec-frontend
-    image: nginx:alpine
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "3000:80"  # Frontend en puerto 3000
-    volumes:
-      - ./frontend:/usr/share/nginx/html:ro
     networks:
       - cloudsec-network
     labels:
