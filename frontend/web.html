@@ -43,7 +43,7 @@
         <div class="demo-grid">
             <div class="api-card insecure">
                 <h2 class="card-title">🔴 API Insegura</h2>
-                <div class="endpoint-info"><strong>Endpoint:</strong> http://localhost:8080<br><strong>API Key:</strong> changeme</div>
+                <div class="endpoint-info"><strong>Endpoint:</strong> <span id="insecure-url">:8080</span><br><strong>API Key:</strong> changeme</div>
                 <input type="text" id="insecure-key" value="changeme" placeholder="API Key">
                 <button class="btn-test" onclick="testInsecureAPI()">🧪 Probar Acceso</button>
                 <button class="btn-attack" onclick="attackInsecureAPI()">⚠️ Simular Ataque</button>
@@ -51,7 +51,7 @@
             </div>
             <div class="api-card secure">
                 <h2 class="card-title">🟢 API Segura</h2>
-                <div class="endpoint-info"><strong>Endpoint:</strong> http://localhost:8443<br><strong>API Key:</strong> (ver .env)</div>
+                <div class="endpoint-info"><strong>Endpoint:</strong> <span id="secure-url">:8443</span><br><strong>API Key:</strong> (ver .env)</div>
                 <input type="text" id="secure-key" placeholder="API key del .env">
                 <button class="btn-test" onclick="testSecureAPI()">🧪 Probar con Key</button>
                 <button class="btn-test" onclick="testSecureAPINoKey()">🚫 Probar sin Key</button>
@@ -61,8 +61,10 @@
         </div>
     </div>
     <script>
-        const INSECURE_API = 'http://localhost:8080';
-        const SECURE_API = 'http://localhost:8443';
+        // Detectar si estamos en localhost o VM
+        const hostname = window.location.hostname;
+        const INSECURE_API = `http://${hostname}:8080`;
+        const SECURE_API = `http://${hostname}:8443`;
         function showResponse(id, data, type) {
             document.getElementById(id).className = `response-box ${type}`;
             document.getElementById(id).textContent = JSON.stringify(data, null, 2);
@@ -116,6 +118,11 @@
             }
             showResponse('secure-response', { status: '✅ RATE LIMITING ACTIVO', requests: 110, exitosas: ok, bloqueadas: blocked }, 'success');
         }
+        // Mostrar URLs dinámicamente
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('insecure-url').textContent = INSECURE_API;
+            document.getElementById('secure-url').textContent = SECURE_API;
+        });
     </script>
 </body>
 </html>
