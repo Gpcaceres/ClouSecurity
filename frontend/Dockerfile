@@ -1,7 +1,7 @@
 FROM nginx:alpine
 
 # Copiar el HTML al directorio de nginx
-COPY web.html /usr/share/nginx/html/
+COPY web.html /usr/share/nginx/html/index.html
 
 # Copiar configuración de nginx para CORS
 COPY nginx.conf /etc/nginx/conf.d/default.conf
