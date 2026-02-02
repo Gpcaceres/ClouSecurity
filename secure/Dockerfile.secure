@@ -1,0 +1,48 @@
+# ✅ VERSIÓN SEGURA: Dockerfile con hardening
+
+# 1. Usar imagen específica con hash para reproducibilidad
+FROM node:18-alpine@sha256:435dcad253bb5b7f347ebc69c8cc52de7c912eb7241098b920f2fc2d7843183d
+
+# 2. Añadir metadata
+LABEL maintainer="security-team@example.com"
+LABEL version="1.0"
+LABEL description="Secure Node.js application with hardening"
+
+# 3. Crear usuario no-root
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# 4. Instalar solo lo necesario y limpiar cache
+RUN apk add --no-cache dumb-init
+
+WORKDIR /app
+
+# 5. Copiar package files primero (mejor cache de layers)
+COPY --chown=nodejs:nodejs secure/package*.json ./
+
+# 6. Instalar solo dependencias de producción
+RUN npm ci --only=production && \
+    npm cache clean --force
+
+# 7. Copiar código de la aplicación
+COPY --chown=nodejs:nodejs secure/index-secure.js ./
+
+# 8. Cambiar a usuario no-root
+USER nodejs
+
+# 9. Configurar variables de entorno seguras
+ENV NODE_ENV=production
+ENV PORT=8080
+
+# 10. Exponer puerto
+EXPOSE 8080
+
+# 11. Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:8080/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+
+# 12. Usar dumb-init para manejar señales correctamente
+ENTRYPOINT ["dumb-init", "--"]
+
+# 13. Comando de inicio
+CMD ["node", "index-secure.js"]

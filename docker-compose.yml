@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # 🔴 SERVICIO INSEGURO - Para demostración de vulnerabilidades
+  insecure:
+    container_name: cloudsec-insecure
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:3000"  # Puerto inseguro en 8080
+    environment:
+      - PORT=3000
+      - API_KEY=changeme
+      - NODE_ENV=development
+    restart: unless-stopped
+    networks:
+      - cloudsec-network
+    labels:
+      - "app.type=insecure"
+      - "app.description=Vulnerable version for security analysis"
+    # Problema: ejecuta como root, sin healthcheck
+
+  # 🟢 SERVICIO SEGURO - Implementación con mejores prácticas
+  secure:
+    container_name: cloudsec-secure
+    build:
+      context: .
+      dockerfile: secure/Dockerfile.secure
+    ports:
+      - "8443:8080"  # Puerto seguro en 8443
+    environment:
+      - PORT=8080
+      - NODE_ENV=production
+      # En producción, usar Secret Manager
+      - API_KEY_SECRET=${API_KEY_SECRET:-secure-demo-key-$(openssl rand -hex 32)}
+    restart: unless-stopped
+    networks:
+      - cloudsec-network
+    labels:
+      - "app.type=secure"
+      - "app.description=Hardened version with security controls"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    # Usuario non-root configurado en Dockerfile
+
+  # 🎨 FRONTEND - Interface web didáctica para demostración
+  frontend:
+    container_name: cloudsec-frontend
+    image: nginx:alpine
+    ports:
+      - "3000:80"  # Frontend en puerto 3000
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    networks:
+      - cloudsec-network
+    labels:
+      - "app.type=frontend"
+      - "app.description=Interactive demo interface"
+    depends_on:
+      - insecure
+      - secure
+    restart: unless-stopped
+
+networks:
+  cloudsec-network:
+    driver: bridge
+    labels:
+      - "project=cloudsecurity"
+      - "purpose=security-demo"
+
+# Volúmenes opcionales para persistencia de logs
+volumes:
+  logs-insecure:
+    driver: local
+  logs-secure:
+    driver: local

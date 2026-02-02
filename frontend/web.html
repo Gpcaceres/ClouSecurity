@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClouSecurity Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header { text-align: center; color: white; margin-bottom: 40px; }
+        h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .api-card { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .api-card.insecure { border-top: 5px solid #e74c3c; }
+        .api-card.secure { border-top: 5px solid #27ae60; }
+        .card-title { font-size: 1.8em; font-weight: bold; margin-bottom: 20px; }
+        .insecure .card-title { color: #e74c3c; }
+        .secure .card-title { color: #27ae60; }
+        .endpoint-info { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-family: monospace; }
+        input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1em; margin-bottom: 10px; }
+        button { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 10px; color: white; }
+        .btn-test { background: #667eea; }
+        .btn-attack { background: #e74c3c; }
+        .response-box { margin-top: 20px; padding: 15px; border-radius: 8px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+        .response-box.success { background: #d4edda; border: 2px solid #28a745; color: #155724; }
+        .response-box.error { background: #f8d7da; border: 2px solid #dc3545; color: #721c24; }
+        .response-box.warning { background: #fff3cd; border: 2px solid #ffc107; color: #856404; }
+        @media (max-width: 968px) { .demo-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔒 ClouSecurity - Demo Interactiva</h1>
+            <p>Análisis Comparativo de Seguridad en APIs</p>
+        </header>
+        <div class="demo-grid">
+            <div class="api-card insecure">
+                <h2 class="card-title">🔴 API Insegura</h2>
+                <div class="endpoint-info"><strong>Endpoint:</strong> http://localhost:8080<br><strong>API Key:</strong> changeme</div>
+                <input type="text" id="insecure-key" value="changeme" placeholder="API Key">
+                <button class="btn-test" onclick="testInsecureAPI()">🧪 Probar Acceso</button>
+                <button class="btn-attack" onclick="attackInsecureAPI()">⚠️ Simular Ataque</button>
+                <div id="insecure-response"></div>
+            </div>
+            <div class="api-card secure">
+                <h2 class="card-title">🟢 API Segura</h2>
+                <div class="endpoint-info"><strong>Endpoint:</strong> http://localhost:8443<br><strong>API Key:</strong> (ver .env)</div>
+                <input type="text" id="secure-key" placeholder="API key del .env">
+                <button class="btn-test" onclick="testSecureAPI()">🧪 Probar con Key</button>
+                <button class="btn-test" onclick="testSecureAPINoKey()">🚫 Probar sin Key</button>
+                <button class="btn-attack" onclick="attackSecureAPI()">🛡️ Test Rate Limiting</button>
+                <div id="secure-response"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const INSECURE_API = 'http://localhost:8080';
+        const SECURE_API = 'http://localhost:8443';
+        function showResponse(id, data, type) {
+            document.getElementById(id).className = `response-box ${type}`;
+            document.getElementById(id).textContent = JSON.stringify(data, null, 2);
+        }
+        async function testInsecureAPI() {
+            try {
+                const res = await fetch(`${INSECURE_API}/secure`, { headers: { 'x-api-key': document.getElementById('insecure-key').value } });
+                const data = await res.json();
+                showResponse('insecure-response', { status: res.ok ? '⚠️ VULNERABLE' : 'Denegado', data }, res.ok ? 'warning' : 'error');
+            } catch (e) {
+                showResponse('insecure-response', { error: e.message }, 'error');
+            }
+        }
+        async function attackInsecureAPI() {
+            let ok = 0;
+            for (let i = 0; i < 50; i++) {
+                try {
+                    const res = await fetch(`${INSECURE_API}/secure`, { headers: { 'x-api-key': 'test' + i } });
+                    if (res.ok) ok++;
+                } catch {}
+            }
+            showResponse('insecure-response', { status: '⚠️ SIN RATE LIMITING', requests: 50, exitosas: ok, riesgo: 'CRÍTICO' }, 'warning');
+        }
+        async function testSecureAPI() {
+            const key = document.getElementById('secure-key').value;
+            if (!key) return showResponse('secure-response', { error: 'Ingresa API key' }, 'error');
+            try {
+                const res = await fetch(`${SECURE_API}/secure`, { headers: { 'x-api-key': key } });
+                const data = await res.json();
+                showResponse('secure-response', { status: res.ok ? '✅ AUTORIZADO' : '❌ DENEGADO', data }, res.ok ? 'success' : 'error');
+            } catch (e) {
+                showResponse('secure-response', { error: e.message }, 'error');
+            }
+        }
+        async function testSecureAPINoKey() {
+            try {
+                const res = await fetch(`${SECURE_API}/secure`);
+                const data = await res.json();
+                showResponse('secure-response', { status: '✅ PROTEGIDO', httpCode: res.status, data }, 'success');
+            } catch (e) {
+                showResponse('secure-response', { error: e.message }, 'error');
+            }
+        }
+        async function attackSecureAPI() {
+            let ok = 0, blocked = 0;
+            for (let i = 0; i < 110; i++) {
+                try {
+                    const res = await fetch(`${SECURE_API}/health`);
+                    res.status === 429 ? blocked++ : ok++;
+                } catch {}
+            }
+            showResponse('secure-response', { status: '✅ RATE LIMITING ACTIVO', requests: 110, exitosas: ok, bloqueadas: blocked }, 'success');
+        }
+    </script>
+</body>
+</html>

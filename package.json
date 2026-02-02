@@ -1,10 +1,10 @@
 {
-  "name": "cloudsecurity-example",
+  "name": "cloudsecurity-insecure",
   "version": "0.1.0",
-  "description": "Minimal Node.js example for cloud security report",
-  "main": "index.js",
+  "description": "Insecure Node.js example for cloud security analysis",
+  "main": "index-insecure.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index-insecure.js"
   },
   "dependencies": {
     "express": "^4.18.2"

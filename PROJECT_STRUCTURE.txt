@@ -1,0 +1,229 @@
+                  ╔═══════════════════════════════════════════╗
+                  ║   PROYECTO CLOUSECURITY - ESTRUCTURA     ║
+                  ╚═══════════════════════════════════════════╝
+
+📁 ClouSecurity/
+│
+├── 🔴 ESCENARIO INSEGURO (Análisis de Vulnerabilidades)
+│   ├── index-insecure.js          ⚠️  App con vulnerabilidades intencionales
+│   ├── Dockerfile                  ⚠️  Sin hardening de seguridad
+│   ├── deploy_vm.sh               ⚠️  Despliegue básico en VM
+│   └── package.json               📦  Dependencias mínimas
+│
+├── 🟢 ESCENARIO SEGURO (Mejores Prácticas)
+│   ├── secure/
+│   │   ├── index-secure.js        ✅  App con controles de seguridad
+│   │   ├── Dockerfile.secure      ✅  Dockerfile con hardening
+│   │   └── package.json           ✅  Incluye helmet, rate-limit, etc.
+│   └── deploy_gcloud_secure.sh    ✅  Despliegue en Cloud Run + Secret Manager
+│
+├── 🎭 DOCKER COMPOSE (Demo Local)
+│   ├── docker-compose.yml         🐳  Orquestación de ambos escenarios
+│   ├── demo.sh                    🖥️  Script interactivo (Linux/Mac)
+│   ├── demo.bat                   🖥️  Script interactivo (Windows)
+│   └── .env.example               🔑  Variables de entorno ejemplo
+│
+├── 📚 DOCUMENTACIÓN
+│   ├── README.md                   📖  Documentación principal
+│   ├── QUICKSTART.md              🚀  Guía rápida de ejecución
+│   ├── DOCKER_COMPOSE_GUIDE.md    🐳  Guía de Docker Compose
+│   ├── SECURITY_COMPARISON.md     📊  Análisis comparativo detallado
+│   ├── RESUMEN_EJECUTIVO.md       📋  Resumen del proyecto
+│   ├── PROJECT_STRUCTURE.txt      📐  Este archivo
+│   └── report/
+│       └── report.tex             📄  Informe académico LaTeX
+│
+└── 🔧 UTILIDADES
+    ├── deploy_gcloud.sh           🌐  Despliegue Cloud Run (original)
+    └── prepare_for_pull.sh        🔄  Preparación para Git
+
+═══════════════════════════════════════════════════════════════════════════
+
+                        🎯 RESUMEN DEL PROYECTO
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ OBJETIVO: Análisis comparativo de seguridad en la nube                  │
+│                                                                          │
+│ MÉTODO: Dos escenarios paralelos (inseguro vs seguro)                  │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     🔴 ESCENARIO 1: INSEGURO                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│ Tecnología:  VM + Docker + HTTP                                         │
+│ URL:         http://34.70.59.227:8080                                   │
+│ API Key:     changeme (predecible)                                      │
+│                                                                         │
+│ Vulnerabilidades demostradas:                                          │
+│  ❌ HTTP sin cifrado                                                    │
+│  ❌ Credenciales hardcodeadas                                          │
+│  ❌ Puerto expuesto públicamente                                       │
+│  ❌ Sin rate limiting                                                   │
+│  ❌ Container ejecutando como root                                     │
+│  ❌ Sin validación de entrada                                          │
+│  ❌ Logging insuficiente                                               │
+│                                                                         │
+│ Prueba:                                                                 │
+│  curl http://34.70.59.227:8080/secure -H "x-api-key: changeme"        │
+│  ✅ ACCESO CONCEDIDO (¡VULNERABLE!)                                     │
+│                                                                         │
+│ Puntuación: 25/100 ⛔ NO APTO PARA PRODUCCIÓN                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     🟢 ESCENARIO 2: SEGURO                              │
+├─────────────────────────────────────────────────────────────────────────┤
+│ Tecnología:  Cloud Run + Secret Manager + HTTPS                        │
+│ URL:         https://cloudsec-secure-xxx.run.app                       │
+│ API Key:     64 caracteres aleatorios en Secret Manager                │
+│                                                                         │
+│ Controles implementados:                                               │
+│  ✅ HTTPS automático (TLS 1.3)                                         │
+│  ✅ IAM authentication                                                 │
+│  ✅ Secret Manager para credenciales                                   │
+│  ✅ Rate limiting (100 req/15min)                                      │
+│  ✅ Usuario non-root en container                                      │
+│  ✅ Input validation                                                   │
+│  ✅ Helmet security headers                                            │
+│  ✅ Logging estructurado                                               │
+│  ✅ Escaneo de vulnerabilidades                                        │
+│  ✅ Comparación timing-safe                                            │
+│                                                                         │
+│ Prueba:                                                                 │
+│  curl https://cloudsec-secure-xxx.run.app/secure                       │
+│  ❌ 403 FORBIDDEN (¡SEGURO!)                                            │
+│                                                                         │
+│  # Con autenticación completa:                                         │
+│  TOKEN=$(gcloud auth print-identity-token)                             │
+│  curl -H "Authorization: Bearer $TOKEN" \                              │
+│       -H "x-api-key: <secret>" \                                       │
+│       https://cloudsec-secure-xxx.run.app/secure                       │
+│  ✅ ACCESO CONCEDIDO (con auditoría)                                    │
+│                                                                         │
+│ Puntuación: 85/100 ✅ APTO PARA PRODUCCIÓN                             │
+└─────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════
+
+                    📋 INSTRUCCIONES DE EJECUCIÓN
+
+┌──────────────── OPCIÓN 1: Docker Compose (Local) ─────────────────────┐
+│ ⭐ RECOMENDADO PARA DEMOSTRACIONES                                     │
+│                                                                         │
+│  Windows:                                                              │
+│     demo.bat                                                           │
+│                                                                         │
+│  Linux/Mac:                                                            │
+│     chmod +x demo.sh                                                   │
+│     ./demo.sh                                                          │
+│                                                                         │
+│  O manualmente:                                                        │
+│     docker-compose up -d              # Ambos escenarios              │
+│     docker-compose up -d insecure     # Solo inseguro (8080)          │
+│     docker-compose up -d secure       # Solo seguro (8443)            │
+│                                                                         │
+│  Acceso:                                                               │
+│     INSEGURO: http://localhost:8080                                   │
+│     SEGURO:   http://localhost:8443                                   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────── OPCIÓN 2: Escenario Inseguro en VM ───────────────────┐
+│                                                                         │
+│  1. Conectar a tu VM:                                                  │
+│     gcloud compute ssh cloudsec-vm --zone=us-central1-a                │
+│                                                                         │
+│  2. Clonar el repo:                                                    │
+│     git clone https://github.com/Gpcaceres/ClouSecurity.git            │
+│     cd ClouSecurity                                                    │
+│                                                                         │
+│  3. Desplegar:                                                         │
+│     chmod +x deploy_vm.sh                                              │
+│     ./deploy_vm.sh                                                     │
+│                                                                         │
+│  4. Probar vulnerabilidad:                                             │
+│     curl http://34.70.59.227:8080/secure -H "x-api-key: changeme"     │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────── OPCIÓN 3: Escenario Seguro en Cloud Run ──────────────┐
+│                                                                         │
+│  1. En tu máquina local, autenticar:                                   │
+│     gcloud auth login                                                  │
+│                                                                         │
+│  2. Desplegar versión segura:                                          │
+│     cd ClouSecurity                                                    │
+│     chmod +x deploy_gcloud_secure.sh                                   │
+│     PROJECT_ID=tu-proyecto ./deploy_gcloud_secure.sh                   │
+│                                                                         │
+│  3. Guardar la API key generada (se muestra solo una vez)             │
+│                                                                         │
+│  4. Probar seguridad:                                                  │
+│     # Sin auth - debe fallar                                           │
+│     curl https://cloudsec-secure-xxx.run.app/secure                    │
+│                                                                         │
+│     # Con auth completa - debe funcionar                               │
+│     TOKEN=$(gcloud auth print-identity-token)                          │
+│     curl -H "Authorization: Bearer $TOKEN" \                           │
+│          -H "x-api-key: <tu-api-key>" \                                │
+│          https://cloudsec-secure-xxx.run.app/secure                    │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════
+
+                    📊 DOCUMENTACIÓN GENERADA
+
+✅ README.md                    - Documentación principal del proyecto
+✅ QUICKSTART.md               - Guía paso a paso de ejecución
+✅ DOCKER_COMPOSE_GUIDE.md     - Guía de Docker Compose para demo local
+✅ SECURITY_COMPARISON.md      - Análisis detallado de vulnerabilidades
+✅ RESUMEN_EJECUTIVO.md        - Resumen ejecutivo del proyecto
+✅ report/report.tex           - Plantilla para informe académico
+✅ index-insecure.js           - App insegura con comentarios explicativos
+✅ secure/index-secure.js      - App segura con mejores prácticas
+✅ Dockerfiles                 - Ambas versiones con comentarios
+✅ docker-compose.yml          - Orquestación de ambos escenarios
+
+═══════════════════════════════════════════════════════════════════════════
+
+                    🎓 OBJETIVOS DE APRENDIZAJE
+
+1. ✅ Identificar vulnerabilidades comunes en despliegues cloud
+2. ✅ Entender el modelo de responsabilidad compartida (IaaS vs PaaS)
+3. ✅ Implementar gestión segura de secretos con Secret Manager
+4. ✅ Aplicar principio de menor privilegio (IAM, non-root users)
+5. ✅ Configurar defensa en profundidad (múltiples capas)
+6. ✅ Implementar logging y monitoreo para detección de incidentes
+7. ✅ Comparar superficie de ataque entre arquitecturas
+8. ✅ Aplicar mejores prácticas de containerización
+
+═══════════════════════════════════════════════════════════════════════════
+
+                    🔍 PRÓXIMOS PASOS
+
+[ ] 1. Ejecutar ambos escenarios
+[ ] 2. Tomar capturas de pantalla de las pruebas
+[ ] 3. Documentar hallazgos en SECURITY_COMPARISON.md
+[ ] 4. Completar report.tex con tus observaciones
+[ ] 5. Compilar PDF: pdflatex report/report.tex
+[ ] 6. Preparar presentación comparativa
+
+═══════════════════════════════════════════════════════════════════════════
+
+                    💡 TIPS IMPORTANTES
+
+⚠️  El escenario INSEGURO es intencional - NUNCA usar en producción
+✅  El escenario SEGURO implementa mejores prácticas reales
+📸  Documenta TODO con capturas de pantalla
+🔑  Guarda la API key generada - no se puede recuperar después
+🧹  No olvides limpiar recursos al terminar para evitar costos
+
+═══════════════════════════════════════════════════════════════════════════
+
+              ¡PROYECTO LISTO PARA ANÁLISIS DE SEGURIDAD!
+
+          Lee QUICKSTART.md para instrucciones paso a paso
+          Lee SECURITY_COMPARISON.md para análisis detallado
+
+═══════════════════════════════════════════════════════════════════════════
