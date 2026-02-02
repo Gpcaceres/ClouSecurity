@@ -21,7 +21,7 @@ WORKDIR /app
 COPY --chown=nodejs:nodejs secure/package*.json ./
 
 # 6. Instalar solo dependencias de producción
-RUN npm ci --only=production && \
+RUN npm install --omit=dev && \
     npm cache clean --force
 
 # 7. Copiar código de la aplicación
