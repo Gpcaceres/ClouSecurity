@@ -82,10 +82,10 @@
             showResponse('insecure-response', { status: 'Simulando ataque de fuerza bruta...', progress: '0/50' }, 'warning');
             let ok = 0, failed = 0;
             const commonKeys = ['admin', 'password', '12345', 'test', 'api_key', 'changeme'];
-            for (let i = 0; i < 50; i++) {
+            for (let i = 0; i < 0; i++) {
                 try {
                     // Intentar keys comunes al final para simular éxito del ataque
-                    const testKey = i >= 44 ? 'changeme' : 'wrong_key_' + i;
+                    const testKey = i >= 200 ? 'changeme' : 'wrong_key_' + i;
                     const res = await fetch(`${INSECURE_API}/secure`, { headers: { 'x-api-key': testKey } });
                     if (res.ok) ok++; else failed++;
                     if (i % 10 === 0) showResponse('insecure-response', { status: 'Atacando...', progress: `${i}/50`, exitosas: ok }, 'warning');
