@@ -79,11 +79,13 @@
             }
         }
         async function attackInsecureAPI() {
+            showResponse('insecure-response', { status: 'Atacando...', progress: '0/50' }, 'warning');
             let ok = 0;
             for (let i = 0; i < 50; i++) {
                 try {
                     const res = await fetch(`${INSECURE_API}/secure`, { headers: { 'x-api-key': 'test' + i } });
                     if (res.ok) ok++;
+                    if (i % 10 === 0) showResponse('insecure-response', { status: 'Atacando...', progress: `${i}/50` }, 'warning');
                 } catch {}
             }
             showResponse('insecure-response', { status: '⚠️ SIN RATE LIMITING', requests: 50, exitosas: ok, riesgo: 'CRÍTICO' }, 'warning');
@@ -109,11 +111,13 @@
             }
         }
         async function attackSecureAPI() {
+            showResponse('secure-response', { status: 'Testeando Rate Limiting...', progress: '0/110' }, 'success');
             let ok = 0, blocked = 0;
             for (let i = 0; i < 110; i++) {
                 try {
                     const res = await fetch(`${SECURE_API}/health`);
                     res.status === 429 ? blocked++ : ok++;
+                    if (i % 20 === 0) showResponse('secure-response', { status: 'Testeando...', progress: `${i}/110`, bloqueadas: blocked }, 'success');
                 } catch {}
             }
             showResponse('secure-response', { status: '✅ RATE LIMITING ACTIVO', requests: 110, exitosas: ok, bloqueadas: blocked }, 'success');
