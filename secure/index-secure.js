@@ -29,9 +29,11 @@ app.use((req, res, next) => {
 
 // 2. Rate limiting para prevenir ataques de fuerza bruta
 const limiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minuto
-  max: 5, // límite de 5 requests por minuto
-  message: { error: 'Too many requests, please try again later.' }
+  windowMs: 15 * 60 * 1000, // 15 minutos (ventana más larga)
+  max: 5, // límite de 5 requests por 15 minutos
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use(limiter);
 
