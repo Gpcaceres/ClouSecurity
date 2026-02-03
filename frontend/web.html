@@ -79,22 +79,22 @@
             }
         }
         async function attackInsecureAPI() {
-            showResponse('insecure-response', { status: 'Simulando ataque de fuerza bruta...', progress: '0/50' }, 'warning');
+            showResponse('insecure-response', { status: 'Simulando ataque de fuerza bruta...', progress: '0/250' }, 'warning');
             let ok = 0, failed = 0;
             const commonKeys = ['admin', 'password', '12345', 'test', 'api_key', 'changeme'];
-            for (let i = 0; i < 0; i++) {
+            for (let i = 0; i < 250; i++) {
                 try {
                     // Intentar keys comunes al final para simular éxito del ataque
-                    const testKey = i >= 200 ? 'changeme' : 'wrong_key_' + i;
+                    const testKey = i >= 244 ? 'changeme' : 'wrong_key_' + i;
                     const res = await fetch(`${INSECURE_API}/secure`, { headers: { 'x-api-key': testKey } });
                     if (res.ok) ok++; else failed++;
-                    if (i % 10 === 0) showResponse('insecure-response', { status: 'Atacando...', progress: `${i}/50`, exitosas: ok }, 'warning');
+                    if (i % 25 === 0) showResponse('insecure-response', { status: 'Atacando...', progress: `${i}/250`, exitosas: ok }, 'warning');
                 } catch {}
             }
             showResponse('insecure-response', { 
                 status: '⚠️ SIN RATE LIMITING', 
                 mensaje: 'Ataque exitoso después de intentos',
-                requests: 50, 
+                requests: 250, 
                 exitosas: ok, 
                 fallidas: failed,
                 riesgo: 'CRÍTICO - Fuerza bruta posible' 
@@ -123,7 +123,7 @@
         async function attackSecureAPI() {
             showResponse('secure-response', { status: 'Testeando Rate Limiting...', progress: '0/110' }, 'success');
             let ok = 0, blocked = 0;
-            for (let i = 0; i < 110; i++) {
+            for (let i = 0; i < 10; i++) {
                 try {
                     const res = await fetch(`${SECURE_API}/health`);
                     res.status === 429 ? blocked++ : ok++;
