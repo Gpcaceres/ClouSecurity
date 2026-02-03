@@ -132,7 +132,11 @@
             try {
                 const res = await fetch(`${SECURE_API}/secure`, { headers: { 'x-api-key': key } });
                 const data = await res.json();
-                showResponse('secure-response', { status: res.ok ? '✅ AUTORIZADO' : '❌ DENEGADO', data }, res.ok ? 'success' : 'error');
+                if (res.status === 429) {
+                    showResponse('secure-response', { status: '❌ DENEGADO', data }, 'error');
+                } else {
+                    showResponse('secure-response', { status: res.ok ? '✅ AUTORIZADO' : '❌ DENEGADO', data }, res.ok ? 'success' : 'error');
+                }
             } catch (e) {
                 showResponse('secure-response', { error: e.message }, 'error');
             }
