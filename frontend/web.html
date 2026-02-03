@@ -79,16 +79,26 @@
             }
         }
         async function attackInsecureAPI() {
-            showResponse('insecure-response', { status: 'Atacando...', progress: '0/50' }, 'warning');
-            let ok = 0;
+            showResponse('insecure-response', { status: 'Simulando ataque de fuerza bruta...', progress: '0/50' }, 'warning');
+            let ok = 0, failed = 0;
+            const commonKeys = ['admin', 'password', '12345', 'test', 'api_key', 'changeme'];
             for (let i = 0; i < 50; i++) {
                 try {
-                    const res = await fetch(`${INSECURE_API}/secure`, { headers: { 'x-api-key': 'test' + i } });
-                    if (res.ok) ok++;
-                    if (i % 10 === 0) showResponse('insecure-response', { status: 'Atacando...', progress: `${i}/50` }, 'warning');
+                    // Intentar keys comunes al final para simular éxito del ataque
+                    const testKey = i >= 44 ? 'changeme' : 'wrong_key_' + i;
+                    const res = await fetch(`${INSECURE_API}/secure`, { headers: { 'x-api-key': testKey } });
+                    if (res.ok) ok++; else failed++;
+                    if (i % 10 === 0) showResponse('insecure-response', { status: 'Atacando...', progress: `${i}/50`, exitosas: ok }, 'warning');
                 } catch {}
             }
-            showResponse('insecure-response', { status: '⚠️ SIN RATE LIMITING', requests: 50, exitosas: ok, riesgo: 'CRÍTICO' }, 'warning');
+            showResponse('insecure-response', { 
+                status: '⚠️ SIN RATE LIMITING', 
+                mensaje: 'Ataque exitoso después de intentos',
+                requests: 50, 
+                exitosas: ok, 
+                fallidas: failed,
+                riesgo: 'CRÍTICO - Fuerza bruta posible' 
+            }, 'warning');
         }
         async function testSecureAPI() {
             const key = document.getElementById('secure-key').value;
