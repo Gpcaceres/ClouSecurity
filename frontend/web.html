@@ -157,19 +157,26 @@
             
             let ok = 0, blocked = 0, i = 0;
             let errorMessage = null;
+            let consecutiveBlocks = 0;
             showResponse('secure-response', { status: 'Test de rate limiting iniciado...', intentos: 0, bloqueadas: 0 }, 'success');
             
-            while (secureAttackRunning) {
+            while (secureAttackRunning && i < 50) { // Límite máximo de 50 intentos
                 try {
                     const res = await fetch(`${SECURE_API}/health`);
                     if (res.status === 429) {
                         blocked++;
+                        consecutiveBlocks++;
                         if (!errorMessage) {
                             const data = await res.json();
                             errorMessage = data.error;
                         }
+                        // Detener automáticamente después de 10 bloqueos consecutivos
+                        if (consecutiveBlocks >= 10) {
+                            secureAttackRunning = false;
+                        }
                     } else {
                         ok++;
+                        consecutiveBlocks = 0;
                     }
                     i++;
                     if (i % 5 === 0) {
@@ -187,6 +194,10 @@
                     await new Promise(resolve => setTimeout(resolve, 100));
                 } catch {}
             }
+            
+            secureAttackRunning = false;
+            document.getElementById('secure-attack-btn').style.display = 'block';
+            document.getElementById('secure-stop-btn').classList.remove('active');
             
             const finalResponse = { 
                 status: '✅ TEST COMPLETADO', 
