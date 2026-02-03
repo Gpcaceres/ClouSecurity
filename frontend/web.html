@@ -156,33 +156,50 @@
             document.getElementById('secure-stop-btn').classList.add('active');
             
             let ok = 0, blocked = 0, i = 0;
+            let errorMessage = null;
             showResponse('secure-response', { status: 'Test de rate limiting iniciado...', intentos: 0, bloqueadas: 0 }, 'success');
             
             while (secureAttackRunning) {
                 try {
                     const res = await fetch(`${SECURE_API}/health`);
-                    res.status === 429 ? blocked++ : ok++;
+                    if (res.status === 429) {
+                        blocked++;
+                        if (!errorMessage) {
+                            const data = await res.json();
+                            errorMessage = data.error;
+                        }
+                    } else {
+                        ok++;
+                    }
                     i++;
                     if (i % 5 === 0) {
-                        showResponse('secure-response', { 
-                            status: blocked > 0 ? '✅ PROTECCIÓN ACTIVA' : '🔄 TESTEANDO...', 
+                        const response = { 
+                            status: blocked > 0 ? '✅ PROTECCIÓN ACTIVA - BLOQUEADO' : '🔄 TESTEANDO...', 
                             intentos: i,
                             exitosas: ok, 
                             bloqueadas: blocked
-                        }, blocked > 0 ? 'success' : 'warning');
+                        };
+                        if (errorMessage) {
+                            response.mensajeServidor = errorMessage;
+                        }
+                        showResponse('secure-response', response, blocked > 0 ? 'error' : 'warning');
                     }
                     await new Promise(resolve => setTimeout(resolve, 100));
                 } catch {}
             }
             
-            showResponse('secure-response', { 
+            const finalResponse = { 
                 status: '✅ TEST COMPLETADO', 
                 mensaje: blocked > 0 ? 'Rate limiting funcionando correctamente' : 'Aún dentro del límite permitido',
                 totalIntentos: i, 
                 exitosas: ok, 
                 bloqueadas: blocked,
                 proteccion: blocked > 0 ? 'ACTIVA' : 'Límite no alcanzado'
-            }, 'success');
+            };
+            if (errorMessage) {
+                finalResponse.mensajeServidor = errorMessage;
+            }
+            showResponse('secure-response', finalResponse, blocked > 0 ? 'error' : 'success');
         }
         
         function stopSecureAttack() {
