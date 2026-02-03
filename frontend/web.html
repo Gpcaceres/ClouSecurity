@@ -27,6 +27,8 @@
         button { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 10px; color: white; }
         .btn-test { background: #667eea; }
         .btn-attack { background: #e74c3c; }
+        .btn-stop { background: #c0392b; display: none; }
+        .btn-stop.active { display: block; }
         .response-box { margin-top: 20px; padding: 15px; border-radius: 8px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
         .response-box.success { background: #d4edda; border: 2px solid #28a745; color: #155724; }
         .response-box.error { background: #f8d7da; border: 2px solid #dc3545; color: #721c24; }
@@ -46,7 +48,8 @@
                 <div class="endpoint-info"><strong>Endpoint:</strong> <span id="insecure-url">:8080</span><br><strong>API Key:</strong> changeme</div>
                 <input type="text" id="insecure-key" value="changeme" placeholder="API Key">
                 <button class="btn-test" onclick="testInsecureAPI()">🧪 Probar Acceso</button>
-                <button class="btn-attack" onclick="attackInsecureAPI()">⚠️ Simular Ataque</button>
+                <button class="btn-attack" id="insecure-attack-btn" onclick="attackInsecureAPI()">⚠️ Simular Ataque</button>
+                <button class="btn-stop" id="insecure-stop-btn" onclick="stopInsecureAttack()">🛑 Parar Ataque</button>
                 <div id="insecure-response"></div>
             </div>
             <div class="api-card secure">
@@ -55,7 +58,8 @@
                 <input type="text" id="secure-key" placeholder="API key del .env">
                 <button class="btn-test" onclick="testSecureAPI()">🧪 Probar con Key</button>
                 <button class="btn-test" onclick="testSecureAPINoKey()">🚫 Probar sin Key</button>
-                <button class="btn-attack" onclick="attackSecureAPI()">🛡️ Test Rate Limiting</button>
+                <button class="btn-attack" id="secure-attack-btn" onclick="attackSecureAPI()">🛡️ Test Rate Limiting</button>
+                <button class="btn-stop" id="secure-stop-btn" onclick="stopSecureAttack()">🛑 Parar Ataque</button>
                 <div id="secure-response"></div>
             </div>
         </div>
@@ -65,6 +69,8 @@
         const hostname = window.location.hostname;
         const INSECURE_API = `http://${hostname}:8080`;
         const SECURE_API = `http://${hostname}:8443`;
+        let insecureAttackRunning = false;
+        let secureAttackRunning = false;
         function showResponse(id, data, type) {
             document.getElementById(id).className = `response-box ${type}`;
             document.getElementById(id).textContent = JSON.stringify(data, null, 2);
@@ -79,26 +85,46 @@
             }
         }
         async function attackInsecureAPI() {
-            showResponse('insecure-response', { status: 'Simulando ataque de fuerza bruta...', progress: '0/250' }, 'warning');
-            let ok = 0, failed = 0;
-            const commonKeys = ['admin', 'password', '12345', 'test', 'api_key', 'changeme'];
-            for (let i = 0; i < 250; i++) {
+            insecureAttackRunning = true;
+            document.getElementById('insecure-attack-btn').style.display = 'none';
+            document.getElementById('insecure-stop-btn').classList.add('active');
+            
+            let ok = 0, failed = 0, i = 0;
+            showResponse('insecure-response', { status: 'Ataque infinito iniciado...', intentos: 0, exitosas: 0 }, 'warning');
+            
+            while (insecureAttackRunning) {
                 try {
-                    // Intentar keys comunes al final para simular éxito del ataque
-                    const testKey = i >= 244 ? 'changeme' : 'wrong_key_' + i;
+                    const testKey = (i % 50) >= 44 ? 'changeme' : 'wrong_key_' + i;
                     const res = await fetch(`${INSECURE_API}/secure`, { headers: { 'x-api-key': testKey } });
                     if (res.ok) ok++; else failed++;
-                    if (i % 25 === 0) showResponse('insecure-response', { status: 'Atacando...', progress: `${i}/250`, exitosas: ok }, 'warning');
+                    i++;
+                    if (i % 10 === 0) {
+                        showResponse('insecure-response', { 
+                            status: '⚠️ ATAQUE EN CURSO', 
+                            intentos: i,
+                            exitosas: ok, 
+                            fallidas: failed,
+                            riesgo: 'CRÍTICO - Sin protección'
+                        }, 'warning');
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 50));
                 } catch {}
             }
+            
             showResponse('insecure-response', { 
-                status: '⚠️ SIN RATE LIMITING', 
-                mensaje: 'Ataque exitoso después de intentos',
-                requests: 250, 
+                status: '⚠️ ATAQUE DETENIDO', 
+                mensaje: 'Sin rate limiting - todas las peticiones procesadas',
+                totalIntentos: i, 
                 exitosas: ok, 
                 fallidas: failed,
                 riesgo: 'CRÍTICO - Fuerza bruta posible' 
             }, 'warning');
+        }
+        
+        function stopInsecureAttack() {
+            insecureAttackRunning = false;
+            document.getElementById('insecure-attack-btn').style.display = 'block';
+            document.getElementById('insecure-stop-btn').classList.remove('active');
         }
         async function testSecureAPI() {
             const key = document.getElementById('secure-key').value;
@@ -121,16 +147,44 @@
             }
         }
         async function attackSecureAPI() {
-            showResponse('secure-response', { status: 'Testeando Rate Limiting...', progress: '0/10' }, 'success');
-            let ok = 0, blocked = 0;
-            for (let i = 0; i < 10; i++) {
+            secureAttackRunning = true;
+            document.getElementById('secure-attack-btn').style.display = 'none';
+            document.getElementById('secure-stop-btn').classList.add('active');
+            
+            let ok = 0, blocked = 0, i = 0;
+            showResponse('secure-response', { status: 'Test de rate limiting iniciado...', intentos: 0, bloqueadas: 0 }, 'success');
+            
+            while (secureAttackRunning) {
                 try {
                     const res = await fetch(`${SECURE_API}/health`);
                     res.status === 429 ? blocked++ : ok++;
-                    if (i % 5 === 0) showResponse('secure-response', { status: 'Testeando...', progress: `${i}/10`, bloqueadas: blocked }, 'success');
+                    i++;
+                    if (i % 5 === 0) {
+                        showResponse('secure-response', { 
+                            status: blocked > 0 ? '✅ PROTECCIÓN ACTIVA' : '🔄 TESTEANDO...', 
+                            intentos: i,
+                            exitosas: ok, 
+                            bloqueadas: blocked
+                        }, blocked > 0 ? 'success' : 'warning');
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 100));
                 } catch {}
             }
-            showResponse('secure-response', { status: '✅ RATE LIMITING ACTIVO', requests: 10, exitosas: ok, bloqueadas: blocked }, 'success');
+            
+            showResponse('secure-response', { 
+                status: '✅ TEST COMPLETADO', 
+                mensaje: blocked > 0 ? 'Rate limiting funcionando correctamente' : 'Aún dentro del límite permitido',
+                totalIntentos: i, 
+                exitosas: ok, 
+                bloqueadas: blocked,
+                proteccion: blocked > 0 ? 'ACTIVA' : 'Límite no alcanzado'
+            }, 'success');
+        }
+        
+        function stopSecureAttack() {
+            secureAttackRunning = false;
+            document.getElementById('secure-attack-btn').style.display = 'block';
+            document.getElementById('secure-stop-btn').classList.remove('active');
         }
         // Mostrar URLs dinámicamente
         window.addEventListener('DOMContentLoaded', () => {
