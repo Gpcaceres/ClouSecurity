@@ -127,7 +127,7 @@
                 try {
                     const res = await fetch(`${SECURE_API}/health`);
                     res.status === 429 ? blocked++ : ok++;
-                    if (i % 20 === 0) showResponse('secure-response', { status: 'Testeando...', progress: `${i}/10`, bloqueadas: blocked }, 'success');
+                    if (i % 5 === 0) showResponse('secure-response', { status: 'Testeando...', progress: `${i}/10`, bloqueadas: blocked }, 'success');
                 } catch {}
             }
             showResponse('secure-response', { status: '✅ RATE LIMITING ACTIVO', requests: 10, exitosas: ok, bloqueadas: blocked }, 'success');
